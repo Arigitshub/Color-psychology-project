@@ -481,6 +481,26 @@ input[type="text"]:focus {
   color: var(--primary-color);
 }
 
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--box-shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 999;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
 @media (min-width: 768px) {
   .app-main {
     grid-template-columns: 1fr 1fr;
