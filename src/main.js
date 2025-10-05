@@ -9,6 +9,9 @@ const colorPalette = document.getElementById('colorPalette');
 const paletteButtons = document.querySelectorAll('.palette-btn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
+const colorValueEl = document.getElementById('colorValue');
+const colorNameEl = document.getElementById('colorName');
+const toastEl = document.getElementById('toast');
 
 // Color Psychology Data
 const colorPsychology = {
@@ -95,6 +98,8 @@ function init() {
       switchTab(tab);
     });
   });
+
+  colorSwatch.addEventListener('click', () => copyToClipboard(colorValueEl.textContent));
 }
 
 // Update color throughout the app
@@ -105,7 +110,8 @@ function updateColor(hex) {
   
   // Update swatch
   colorSwatch.style.backgroundColor = hex;
-  
+  colorValueEl.textContent = hex;
+
   // Generate and display palette
   generateColorPalette(hex);
   
@@ -121,10 +127,21 @@ function generateColorPalette(baseColor) {
   const palette = chroma.scale([baseColor, 'white']).mode('lch').colors(5);
   
   palette.forEach((color, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'palette-color';
+
     const colorBox = document.createElement('div');
+    colorBox.className = 'color-box';
     colorBox.style.backgroundColor = color;
-    colorBox.title = color;
-    colorPalette.appendChild(colorBox);
+
+    const code = document.createElement('span');
+    code.className = 'color-code';
+    code.textContent = color;
+
+    wrapper.appendChild(colorBox);
+    wrapper.appendChild(code);
+    wrapper.addEventListener('click', () => copyToClipboard(color));
+    colorPalette.appendChild(wrapper);
   });
 }
 
@@ -133,7 +150,9 @@ function analyzeColor(hex) {
   const color = chroma(hex);
   const colorName = getColorName(color);
   const colorData = colorPsychology[colorName] || colorPsychology.blue;
-  
+
+  colorNameEl.textContent = colorData.name;
+
   // Update insights
   document.getElementById('insightsContent').innerHTML = `
     <h4>${colorData.name} Psychology</h4>
@@ -184,10 +203,21 @@ function applyEmotionPalette(emotion) {
   // Update palette display
   colorPalette.innerHTML = '';
   palette.forEach(color => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'palette-color';
+
     const colorBox = document.createElement('div');
+    colorBox.className = 'color-box';
     colorBox.style.backgroundColor = color;
-    colorBox.title = color;
-    colorPalette.appendChild(colorBox);
+
+    const code = document.createElement('span');
+    code.className = 'color-code';
+    code.textContent = color;
+
+    wrapper.appendChild(colorBox);
+    wrapper.appendChild(code);
+    wrapper.addEventListener('click', () => copyToClipboard(color));
+    colorPalette.appendChild(wrapper);
   });
 }
 
@@ -297,6 +327,20 @@ function switchTab(tab) {
 // Validate hex color
 function isValidHex(color) {
   return /^#([0-9A-F]{3}){1,2}$/i.test(color);
+}
+
+function showToast(message) {
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2000);
+}
+
+function copyToClipboard(text) {
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`Copied ${text}`);
+  });
 }
 
 // Initialize the app
