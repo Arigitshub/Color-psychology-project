@@ -13,6 +13,20 @@ const paletteModeSelect = document.getElementById('paletteMode');
 const themeToggleBtn = document.getElementById('themeToggle');
 const colorNameEl = document.getElementById('colorName');
 const colorValueEl = document.getElementById('colorValue');
+const copyHexBtn = document.getElementById('copyHexBtn');
+const savePaletteBtn = document.getElementById('savePaletteBtn');
+const shareLinkBtn = document.getElementById('shareLinkBtn');
+const exportPaletteBtn = document.getElementById('exportPaletteBtn');
+const savedPalettesContainer = document.getElementById('savedPalettes');
+const clearSavedBtn = document.getElementById('clearSavedBtn');
+const toastEl = document.getElementById('toast');
+const harmonyContent = document.getElementById('harmonyContent');
+const strategyContent = document.getElementById('strategyContent');
+const paletteMetaEl = document.getElementById('paletteMeta');
+
+const STORAGE_KEY = 'colorMind.saves';
+let currentPaletteColors = [];
+let currentHex = colorPicker ? colorPicker.value : '#4a6bff';
 
 // Color Psychology Data
 const colorPsychology = {
