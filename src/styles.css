@@ -331,6 +331,20 @@ input[type="text"]:focus {
   font-size: 1.5rem;
 }
 
+/* Replace broken icon glyphs with emoji using pseudo-elements */
+.palette-btn .palette-icon { display: none; }
+.palette-btn::before {
+  content: '';
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: var(--spacing-xs);
+}
+.palette-btn[data-emotion="calm"]::before { content: '🧘'; }
+.palette-btn[data-emotion="energy"]::before { content: '⚡'; }
+.palette-btn[data-emotion="trust"]::before { content: '🤝'; }
+.palette-btn[data-emotion="creativity"]::before { content: '🎨'; }
+.palette-btn[data-emotion="luxury"]::before { content: '💎'; }
+
 .color-display {
   display: grid;
   grid-template-columns: 1fr;

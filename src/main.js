@@ -431,5 +431,79 @@ function isValidHex(color) {
   return /^#([0-9A-F]{3}){1,2}$/i.test(color);
 }
 
+// Enhanced helpers (override + additions)
+function isValidHex(color) {
+  return /^#?([0-9A-F]{3}|[0-9A-F]{6})$/i.test(String(color).trim());
+}
+
+function normalizeHex(input) {
+  let c = String(input).trim().replace(/^#/, '');
+  if (c.length === 3) c = c.split('').map(ch => ch + ch).join('');
+  return '#' + c.toLowerCase();
+}
+
+function copyToClipboard(text) {
+  try {
+    navigator.clipboard && navigator.clipboard.writeText(text);
+  } catch (_) {
+    const t = document.createElement('textarea');
+    t.value = text; document.body.appendChild(t); t.select();
+    document.execCommand('copy'); document.body.removeChild(t);
+  }
+}
+
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function getTemperatureLabel(color) {
+  const h = color.get('hsl.h') || 0;
+  const warm = (h <= 60) || (h >= 330) || (h > 60 && h < 90);
+  return warm ? 'Warm' : 'Cool';
+}
+
+// Theme helpers
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+
+function restoreTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+}
+
+// Override accessibility renderer with improved WCAG details
+function updateAccessibilityInfo(color) {
+  const contrastWhite = chroma.contrast(color, 'white');
+  const contrastBlack = chroma.contrast(color, 'black');
+  const textColor = contrastWhite > contrastBlack ? 'white' : 'black';
+
+  const html = `
+    <div class="accessibility-grid">
+      <div class="accessibility-item">
+        <h4>Contrast Ratio</h4>
+        <p>${contrastWhite.toFixed(2)}:1 on white</p>
+        <p>${contrastBlack.toFixed(2)}:1 on black</p>
+      </div>
+      <div class="accessibility-item">
+        <h4>Recommended Text</h4>
+        <p style="color: ${textColor}; background-color: ${color}; padding: 0.5rem; border-radius: 4px;">
+          ${textColor.toUpperCase()} text for best readability
+        </p>
+      </div>
+      <div class="accessibility-item">
+        <h4>WCAG Compliance</h4>
+        <p>${contrastWhite >= 4.5 ? '✓' : '✗'} AA (normal) on white</p>
+        <p>${contrastWhite >= 3 ? '✓' : '✗'} AA (large) on white</p>
+        <p>${contrastBlack >= 4.5 ? '✓' : '✗'} AA (normal) on black</p>
+        <p>${contrastBlack >= 3 ? '✓' : '✗'} AA (large) on black</p>
+      </div>
+    </div>`;
+
+  document.getElementById('accessibilityContent').innerHTML = html;
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', init);
