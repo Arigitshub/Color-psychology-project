@@ -463,71 +463,9 @@ function updateColor(hex) {
 
 // Generate color palette
 function generateColorPalette(baseColor) {
-  colorPalette.innerHTML = '';
-
   const mode = paletteModeSelect ? paletteModeSelect.value : 'tints';
-  let colors = [];
-
-  const base = chroma(baseColor);
-  const hue = base.get('hsl.h') || 0;
-
-  switch (mode) {
-    case 'shades':
-      colors = chroma.scale([base, '#000']).mode('lch').colors(5);
-      break;
-    case 'monochrome':
-      colors = chroma.scale([
-        base.desaturate(2),
-        base,
-        base.saturate(2)
-      ]).mode('lch').colors(5);
-      break;
-    case 'complementary': {
-      const comp = base.set('hsl.h', (hue + 180) % 360);
-      colors = chroma.scale([base, comp]).mode('lch').colors(5);
-      break;
-    }
-    case 'analogous': {
-      const a1 = base.set('hsl.h', (hue + 30) % 360);
-      const a2 = base.set('hsl.h', (hue + 330) % 360);
-      colors = [a2.hex(), base.hex(), a1.hex(),
-        base.brighten(0.75).hex(), base.darken(0.75).hex()].slice(0, 5);
-      break;
-    }
-    case 'triadic': {
-      const t1 = base.set('hsl.h', (hue + 120) % 360);
-      const t2 = base.set('hsl.h', (hue + 240) % 360);
-      colors = [base.hex(), t1.hex(), t2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
-      break;
-    }
-    case 'split-complementary': {
-      const s1 = base.set('hsl.h', (hue + 150) % 360);
-      const s2 = base.set('hsl.h', (hue + 210) % 360);
-      colors = [base.hex(), s1.hex(), s2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
-      break;
-    }
-    case 'tints':
-    default:
-      colors = chroma.scale([base, '#fff']).mode('lch').colors(5);
-      break;
-  }
-
-  colors.slice(0, 5).forEach((c) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'palette-color';
-    const box = document.createElement('div');
-    box.className = 'color-box';
-    box.style.backgroundColor = c;
-    box.title = c;
-    const code = document.createElement('span');
-    code.className = 'color-code';
-    code.textContent = c.toUpperCase();
-    code.title = 'Click to copy';
-    code.addEventListener('click', () => copyToClipboard(c.toUpperCase()))
-    wrap.appendChild(box);
-    wrap.appendChild(code);
-    colorPalette.appendChild(wrap);
-  });
+  const colors = buildPaletteFromMode(baseColor, mode);
+  renderPaletteColors(colors, `${formatModeLabel(mode)} palette`);
 }
 
 // Analyze color and display results
