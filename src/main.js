@@ -126,6 +126,165 @@ const emotionPalettes = {
   luxury: ["#0f0f10", "#221f1f", "#3b2f4a", "#6a4c93", "#d4af37"]
 };
 
+const colorStrategies = {
+  red: {
+    archetype: 'The Activator',
+    tone: ['Bold', 'Decisive', 'Urgent'],
+    industries: ['E-commerce promos', 'Fitness & sport', 'Food delivery'],
+    taglines: [
+      'Turn urgency into action.',
+      'Fuel adrenaline-packed experiences.',
+      'Design for conversion at first glance.'
+    ],
+    ctas: ['Claim your spot', 'Start your trial', 'Boost performance'],
+    pairings: ['Ground with charcoal for drama.', 'Soften with sandstone neutrals.', 'Add neon accents for tech energy.'],
+    guidance: 'Use red when you need immediate attention and momentum. Contrast is critical—balance energetic elements with generous whitespace.'
+  },
+  orange: {
+    archetype: 'The Cheerleader',
+    tone: ['Optimistic', 'Playful', 'Approachable'],
+    industries: ['Onboarding flows', 'Entertainment', 'Community apps'],
+    taglines: [
+      'Turn curiosity into commitment.',
+      'Welcome users with warmth.',
+      'Build communities that buzz.'
+    ],
+    ctas: ['Get started', 'Join the fun', 'See what\'s new'],
+    pairings: ['Use deep navy for mature contrast.', 'Pair with cream for lifestyle brands.', 'Blend with pink for youthful vibes.'],
+    guidance: 'Orange thrives in moments that should feel friendly yet focused. Support it with confident typography and rounded UI elements.'
+  },
+  yellow: {
+    archetype: 'The Optimist',
+    tone: ['Inventive', 'Bright', 'Uplifting'],
+    industries: ['Education', 'Productivity', 'Kids & family'],
+    taglines: [
+      'Design for delightful clarity.',
+      'Bring sunlight into complex workflows.',
+      'Encourage discovery through positivity.'
+    ],
+    ctas: ['Explore lessons', 'Unlock insights', 'Create something new'],
+    pairings: ['Anchor with slate gray for legibility.', 'Add teal for fresh contrast.', 'Blend with coral for creative storytelling.'],
+    guidance: 'Balance yellow with structured layouts and high-contrast text. Use it sparingly to highlight key actions or celebrate wins.'
+  },
+  green: {
+    archetype: 'The Growth Partner',
+    tone: ['Restorative', 'Balanced', 'Assured'],
+    industries: ['Wellness & health', 'Fintech', 'Sustainability'],
+    taglines: [
+      'Design experiences around renewal.',
+      'Make progress feel sustainable.',
+      'Bring calm momentum to data-heavy flows.'
+    ],
+    ctas: ['See your impact', 'Track progress', 'Request a demo'],
+    pairings: ['Pair with midnight blue for premium calm.', 'Layer with beige for organic brands.', 'Use chrome accents for innovation.'],
+    guidance: 'Green reassures users that growth is possible. Use layered gradients and organic shapes to emphasize progress and clarity.'
+  },
+  teal: {
+    archetype: 'The Mindful Innovator',
+    tone: ['Clarifying', 'Balanced', 'Insightful'],
+    industries: ['Digital health', 'SaaS dashboards', 'Creative tooling'],
+    taglines: [
+      'Turn complex data into calm confidence.',
+      'Blend empathy with innovation.',
+      'Design clarity without losing character.'
+    ],
+    ctas: ['Visualize now', 'Run the demo', 'Guide me'],
+    pairings: ['Accent with coral for personality.', 'Ground with graphite for authority.', 'Use lilac for modern wellness branding.'],
+    guidance: 'Teal bridges logic and emotion. Support it with precise spacing, soft gradients, and plenty of negative space.'
+  },
+  blue: {
+    archetype: 'The Trusted Guide',
+    tone: ['Reliable', 'Calming', 'Strategic'],
+    industries: ['Finance', 'B2B SaaS', 'Healthcare'],
+    taglines: [
+      'Build credibility at every click.',
+      'Create confidence through clarity.',
+      'Design the calm in complex decisions.'
+    ],
+    ctas: ['Schedule a consult', 'Start planning', 'Secure your spot'],
+    pairings: ['Combine with mint for fresh fintech.', 'Layer with white for institutional trust.', 'Add orange micro-accents to signal action.'],
+    guidance: 'Blue thrives in systems that demand trust. Use it consistently in navigation, backgrounds, and voice to keep users anchored.'
+  },
+  purple: {
+    archetype: 'The Visionary',
+    tone: ['Imaginative', 'Luxurious', 'Expressive'],
+    industries: ['Beauty & fashion', 'Creative tech', 'Premium services'],
+    taglines: [
+      'Design for magnetic storytelling.',
+      'Elevate premium journeys.',
+      'Blend artistry with intelligence.'
+    ],
+    ctas: ['Book a preview', 'See the collection', 'Start crafting'],
+    pairings: ['Ground with black for high fashion.', 'Add rose gold metallics.', 'Mix with cyan for futuristic moods.'],
+    guidance: 'Purple rewards bold typography and cinematic imagery. Introduce motion and depth to amplify its premium energy.'
+  },
+  pink: {
+    archetype: 'The Community Builder',
+    tone: ['Nurturing', 'Playful', 'Inclusive'],
+    industries: ['Lifestyle apps', 'Beauty & wellness', 'Social platforms'],
+    taglines: [
+      'Design spaces that feel personal.',
+      'Encourage self-expression.',
+      'Celebrate progress with warmth.'
+    ],
+    ctas: ['Share your story', 'Celebrate wins', 'Create together'],
+    pairings: ['Contrast with midnight blue for sophistication.', 'Combine with lavender for softness.', 'Layer with lime for unexpected pop.'],
+    guidance: 'Pink invites belonging. Combine with rounded components, thoughtful microcopy, and inclusive imagery to reinforce community.'
+  },
+  brown: {
+    archetype: 'The Craftsman',
+    tone: ['Grounded', 'Reliable', 'Textured'],
+    industries: ['Artisanal goods', 'Outdoors', 'Food & beverage'],
+    taglines: [
+      'Design trust into every tactile detail.',
+      'Highlight craftsmanship and heritage.',
+      'Bring warmth to digital storytelling.'
+    ],
+    ctas: ['Explore the process', 'Meet the makers', 'Taste the difference'],
+    pairings: ['Pair with cream for cozy balance.', 'Use forest green for sustainable narratives.', 'Add copper for refined warmth.'],
+    guidance: 'Brown rewards tactile UI—think layered shadows, realistic textures, and serif typography for authenticity.'
+  },
+  gray: {
+    archetype: 'The Systems Thinker',
+    tone: ['Neutral', 'Refined', 'Methodical'],
+    industries: ['Product design systems', 'Enterprise apps', 'Editorial'],
+    taglines: [
+      'Let functionality lead with clarity.',
+      'Highlight hierarchy through restraint.',
+      'Design timeless digital foundations.'
+    ],
+    ctas: ['Open the playbook', 'Explore components', 'View guidelines'],
+    pairings: ['Add electric blue for focus.', 'Use blush accents for warmth.', 'Layer with black for brutalist aesthetics.'],
+    guidance: 'Gray keeps teams aligned. Lean on typographic rhythm, high contrast states, and adaptive elevation to avoid monotony.'
+  },
+  black: {
+    archetype: 'The Icon',
+    tone: ['Dramatic', 'Confident', 'Minimal'],
+    industries: ['Luxury ecommerce', 'High-end tech', 'Editorial'],
+    taglines: [
+      'Design experiences that feel cinematic.',
+      'Let premium details take the spotlight.',
+      'Deliver elegance with precision.'
+    ],
+    ctas: ['View the campaign', 'Discover the drop', 'Experience the suite'],
+    pairings: ['Use stark white for contrast.', 'Introduce metallics sparingly.', 'Blend with deep emerald for rare luxury.'],
+    guidance: 'Black magnifies sophistication. Use disciplined grids, generous spacing, and restrained animation for maximum impact.'
+  },
+  white: {
+    archetype: 'The Minimalist',
+    tone: ['Pure', 'Open', 'Lightweight'],
+    industries: ['Product marketing', 'Portfolio sites', 'Health & wellness'],
+    taglines: [
+      'Design calm into every pixel.',
+      'Let content take center stage.',
+      'Amplify focus through airy layouts.'
+    ],
+    ctas: ['View the story', 'Start exploring', 'Try the experience'],
+    pairings: ['Introduce charcoal typography.', 'Add glassmorphism effects for depth.', 'Use mint or lilac for gentle highlights.'],
+    guidance: 'White creates breathing room. Support it with precise alignment, micro-interactions, and a confident typographic scale.'
+  }
+};
+
 // Initialize App
 function init() {
   // Set initial color
