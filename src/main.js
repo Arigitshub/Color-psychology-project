@@ -23,6 +23,10 @@ const toastEl = document.getElementById('toast');
 const harmonyContent = document.getElementById('harmonyContent');
 const strategyContent = document.getElementById('strategyContent');
 const paletteMetaEl = document.getElementById('paletteMeta');
+const insightsContent = document.getElementById('insightsContent');
+const recommendationsContent = document.getElementById('recommendationsContent');
+const accessibilityContent = document.getElementById('accessibilityContent');
+const educationContent = document.getElementById('educationContent');
 
 const STORAGE_KEY = 'colorMind.saves';
 let currentPaletteColors = [];
@@ -616,18 +620,13 @@ function getColorName(color) {
 function applyEmotionPalette(emotion) {
   const palette = emotionPalettes[emotion];
   if (!palette) return;
-  
-  // Update primary color
-  updateColor(palette[0]);
-  
-  // Update palette display
-  colorPalette.innerHTML = '';
-  palette.forEach(color => {
-    const colorBox = document.createElement('div');
-    colorBox.style.backgroundColor = color;
-    colorBox.title = color;
-    colorPalette.appendChild(colorBox);
+
+  paletteButtons.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.emotion === emotion);
   });
+
+  updateColor(palette[0]);
+  renderPaletteColors(palette, `Emotion · ${capitalize(emotion)}`);
 }
 
 // Update education content
