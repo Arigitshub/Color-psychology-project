@@ -448,6 +448,8 @@ function updateColor(hex) {
   const normalized = normalizeHex(hex);
   currentHex = normalized;
 
+  paletteButtons.forEach(btn => btn.classList.remove('active'));
+
   if (colorPicker) colorPicker.value = normalized;
   if (colorHexInput) colorHexInput.value = normalized.replace('#', '').toLowerCase();
   if (colorSwatch) colorSwatch.style.backgroundColor = normalized;
@@ -564,36 +566,328 @@ function formatModeLabel(mode) {
   return mode.split('-').map(part => capitalize(part)).join(' ');
 }
 
+function updateHarmonyContent(color) {
+  if (!harmonyContent) return;
+  const harmonies = buildHarmonyMap(color);
+  harmonyContent.innerHTML = Object.entries(harmonies).map(([label, colors]) => `
+    <div class="harmony-row">
+      <span class="harmony-label">${label}</span>
+      <div class="harmony-swatches">
+        ${colors.map(value => `<button type="button" class="harmony-swatch" data-color="${value}" style="background-color: ${value};" title="Try ${value}"></button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildHarmonyMap(color) {
+  const base = chroma(color);
+  const hue = base.get('hsl.h') || 0;
+  const adjustHue = (offset) => base.set('hsl.h', (hue + offset + 360) % 360).hex();
+
+  return {
+    'Complementary': [base.hex(), adjustHue(180)],
+    'Analogous': [adjustHue(-30), base.hex(), adjustHue(30)],
+    'Triadic': [base.hex(), adjustHue(120), adjustHue(240)],
+    'Split Complementary': [base.hex(), adjustHue(150), adjustHue(210)],
+    'Neutral Boost': [base.desaturate(2).hex(), base.desaturate(1).brighten(0.7).hex(), base.hex()]
+  };
+}
+
+function updateStrategyContent(colorName, hex) {
+  if (!strategyContent) return;
+  const strategy = colorStrategies[colorName] || colorStrategies.blue;
+  const normalizedHex = normalizeHex(hex).toUpperCase();
+
+  strategyContent.innerHTML = `
+    <div class="strategy-header">
+      <div class="strategy-badge">${strategy.archetype}</div>
+      <div class="strategy-pill" style="background: linear-gradient(120deg, ${normalizedHex}, ${chroma(hex).brighten(0.8).hex()});"></div>
+      <p>${strategy.guidance}</p>
+    </div>
+    <div class="strategy-grid">
+      <div class="strategy-card">
+        <h4>Campaign Hooks</h4>
+        <ul>
+          ${strategy.taglines.map(line => `<li>${line}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="strategy-card">
+        <h4>Best-fit Industries</h4>
+        <ul>
+          ${strategy.industries.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="strategy-card">
+        <h4>Suggested CTAs</h4>
+        <div class="chip-group">
+          ${strategy.ctas.map(cta => `<span class="chip chip-outline">${cta}</span>`).join('')}
+        </div>
+      </div>
+      <div class="strategy-card">
+        <h4>Pairing Ideas</h4>
+        <ul>
+          ${strategy.pairings.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function formatAsCssVariables(colors) {
+  return colors.map((color, index) => `--color-${index + 1}: ${normalizeHex(color).toUpperCase()};`).join('\n');
+}
+
+function parseInitialState() {
+  const hash = window.location.hash.replace('#', '').trim();
+  if (!hash) return {};
+  const params = new URLSearchParams(hash.includes('=') ? hash : `color=${hash}`);
+  const colorParam = params.get('color');
+  const modeParam = params.get('mode');
+  const color = colorParam && isValidHex(colorParam) ? normalizeHex(colorParam) : null;
+
+  if (!paletteModeSelect) {
+    return { color };
+  }
+
+  const availableModes = Array.from(paletteModeSelect.options || []).map(option => option.value);
+  const mode = availableModes.includes(modeParam) ? modeParam : null;
+  return { color, mode };
+}
+
+function buildShareableUrl(hex) {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams();
+  params.set('color', normalizeHex(hex).replace('#', ''));
+  if (paletteModeSelect) params.set('mode', paletteModeSelect.value);
+  url.hash = params.toString();
+  return url.toString();
+}
+
+function updateShareState(hex) {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams();
+  params.set('color', normalizeHex(hex).replace('#', ''));
+  if (paletteModeSelect) params.set('mode', paletteModeSelect.value);
+  url.hash = params.toString();
+  if (typeof history.replaceState === 'function') {
+    history.replaceState(null, '', url.toString());
+  } else {
+    window.location.hash = params.toString();
+  }
+}
+
+function showToast(message) {
+  if (!toastEl) {
+    console.info(message);
+    return;
+  }
+  toastEl.textContent = message;
+  toastEl.classList.add('visible');
+  clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = setTimeout(() => {
+    toastEl.classList.remove('visible');
+  }, 2200);
+}
+
+function getSavedPalettes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn('Failed to parse saved palettes', error);
+    return [];
+  }
+}
+
+function setSavedPalettes(palettes) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(palettes));
+  } catch (error) {
+    console.warn('Unable to persist palettes', error);
+  }
+}
+
+function renderSavedPalettes() {
+  if (!savedPalettesContainer) return;
+  const saved = getSavedPalettes();
+
+  if (!saved.length) {
+    savedPalettesContainer.innerHTML = `<p class="empty-state">Save palettes to revisit your strongest color stories.</p>`;
+    return;
+  }
+
+  savedPalettesContainer.innerHTML = saved.map((entry, index) => {
+    const paletteHtml = entry.palette.map(color => `<span class="saved-swatch" style="background-color: ${color};" title="${color.toUpperCase()}"></span>`).join('');
+    const dateLabel = entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : 'Recently saved';
+    const modeLabel = entry.meta || formatModeLabel(entry.mode);
+    return `
+      <article class="saved-palette" data-index="${index}">
+        <header class="saved-palette-header">
+          <div>
+            <div class="saved-name">${entry.name || entry.color.toUpperCase()}</div>
+            <div class="saved-meta">${modeLabel} · ${dateLabel}</div>
+          </div>
+          <div class="saved-color">${entry.color.toUpperCase()}</div>
+        </header>
+        <div class="saved-palette-swatches">${paletteHtml}</div>
+        <div class="saved-actions">
+          <button type="button" data-action="apply" data-index="${index}">Use</button>
+          <button type="button" data-action="copy" data-index="${index}">Copy CSS</button>
+          <button type="button" data-action="delete" data-index="${index}">Remove</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function saveCurrentPalette() {
+  if (!currentHex) return;
+  const saved = getSavedPalettes();
+  const normalizedPalette = (currentPaletteColors.length ? currentPaletteColors : [currentHex]).map(color => normalizeHex(color));
+  const currentMode = paletteModeSelect ? paletteModeSelect.value : 'tints';
+  const metaLabel = paletteMetaEl ? paletteMetaEl.textContent : null;
+  const existing = saved.find(item => item.color === currentHex && item.mode === currentMode && (item.meta || '') === (metaLabel || ''));
+
+  if (existing) {
+    showToast('Palette already saved.');
+    return;
+  }
+
+  const entry = {
+    color: currentHex,
+    palette: normalizedPalette,
+    mode: currentMode,
+    timestamp: Date.now(),
+    name: capitalize(getColorName(chroma(currentHex))),
+    meta: metaLabel
+  };
+
+  saved.unshift(entry);
+  setSavedPalettes(saved.slice(0, 12));
+  renderSavedPalettes();
+  showToast('Palette saved to your library.');
+}
+
+function clearSavedPalettes() {
+  setSavedPalettes([]);
+  renderSavedPalettes();
+  showToast('Cleared saved palettes.');
+}
+
+function handleSavedPaletteAction(event) {
+  const actionEl = event.target.closest('[data-action]');
+  if (!actionEl) return;
+  const { action, index } = actionEl.dataset;
+  const idx = Number(index);
+  if (Number.isNaN(idx)) return;
+
+  const saved = getSavedPalettes();
+  const item = saved[idx];
+  if (!item) return;
+
+  switch (action) {
+    case 'apply': {
+      if (paletteModeSelect && item.mode) {
+        paletteModeSelect.value = item.mode;
+      }
+      if (colorPicker) {
+        colorPicker.value = item.color;
+      }
+      updateColor(item.color);
+      renderPaletteColors(item.palette, item.meta || formatModeLabel(item.mode));
+      showToast('Palette applied.');
+      break;
+    }
+    case 'copy': {
+      const success = copyToClipboard(formatAsCssVariables(item.palette));
+      showToast(success ? 'Palette copied as CSS variables.' : 'Copy failed. Try again.');
+      break;
+    }
+    case 'delete': {
+      saved.splice(idx, 1);
+      setSavedPalettes(saved);
+      renderSavedPalettes();
+      showToast('Palette removed.');
+      break;
+    }
+    default:
+      break;
+  }
+}
+
 // Analyze color and display results
 function analyzeColor(hex) {
   const color = chroma(hex);
   const colorName = getColorName(color);
   const colorData = colorPsychology[colorName] || colorPsychology.blue;
+  const strategy = colorStrategies[colorName] || colorStrategies.blue;
+
+  const rgb = color.rgb().map(n => Math.round(n));
+  const [h, s, l] = color.hsl();
+  const [labL, labA, labB] = color.lab();
+  const luminance = color.luminance();
+  const temperature = getTemperatureLabel(color);
   
   // Update insights
-  document.getElementById('insightsContent').innerHTML = `
-    <h4>${colorData.name} Psychology</h4>
-    <p>${colorData.insights}</p>
-    <div class="metrics" style="margin-top: 0.75rem; color: var(--text-light); font-family: monospace; font-size: 0.95rem;">
-      <div>HEX: ${hex.toUpperCase()}</div>
-      <div>RGB: ${color.rgb().map(n => Math.round(n)).join(', ')}</div>
-      <div>HSL: ${(() => { const hsl = color.hsl(); const h = Math.round(hsl[0]||0); const s = Math.round((hsl[1]||0)*100); const l = Math.round((hsl[2]||0)*100); return `${h}, ${s}%, ${l}%`; })()}</div>
-      <div>Luminance: ${color.luminance().toFixed(3)}</div>
-      <div>Temp: ${getTemperatureLabel(color)}</div>
-    </div>
-    <div class="emotion-tags">
-      ${colorData.emotions.map(e => `<span class="tag">${e}</span>`).join('')}
-    </div>
-  `;
+  if (insightsContent) {
+    insightsContent.innerHTML = `
+      <h4>${colorData.name} Psychology</h4>
+      <p>${colorData.insights}</p>
+      <div class="metrics">
+        <div><span class="metric-label">HEX</span><span>${hex.toUpperCase()}</span></div>
+        <div><span class="metric-label">RGB</span><span>${rgb.join(', ')}</span></div>
+        <div><span class="metric-label">HSL</span><span>${Math.round(h || 0)}, ${Math.round((s || 0) * 100)}%, ${Math.round((l || 0) * 100)}%</span></div>
+        <div><span class="metric-label">LAB</span><span>${labL.toFixed(1)}, ${labA.toFixed(1)}, ${labB.toFixed(1)}</span></div>
+        <div><span class="metric-label">Luminance</span><span>${luminance.toFixed(3)}</span></div>
+        <div><span class="metric-label">Temperature</span><span>${temperature}</span></div>
+      </div>
+      <div class="chip-group" aria-label="Brand tone keywords">
+        ${strategy.tone.map(t => `<span class="chip">${t}</span>`).join('')}
+      </div>
+      <div class="emotion-tags" aria-label="Emotions connected to this color">
+        ${colorData.emotions.map(e => `<span class="tag">${e}</span>`).join('')}
+      </div>
+    `;
+  }
   
   // Update recommendations
-  document.getElementById('recommendationsContent').innerHTML = `
-    <h4>Design Applications</h4>
-    <p>${colorData.recommendations}</p>
-    <div class="example-palette">
-      ${colorData.palette.map(c => `<div style="background-color: ${c}" title="${c}"></div>`).join('')}
-    </div>
-  `;
+  if (recommendationsContent) {
+    recommendationsContent.innerHTML = `
+      <h4>Design Applications</h4>
+      <p>${colorData.recommendations}</p>
+      <div class="recommendation-grid">
+        <div>
+          <h5>Where it wins</h5>
+          <ul>
+            ${strategy.industries.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h5>Pairing ideas</h5>
+          <ul>
+            ${strategy.pairings.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div class="example-palette" aria-label="Example supporting palette">
+        ${colorData.palette.map(c => `<button type="button" class="example-swatch" data-color="${c}" style="background-color: ${c}" title="Use ${c}"></button>`).join('')}
+      </div>
+    `;
+  }
+
+  if (recommendationsContent) {
+    recommendationsContent.querySelectorAll('.example-swatch')?.forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        const target = event.currentTarget;
+        if (!target?.dataset?.color) return;
+        const nextHex = normalizeHex(target.dataset.color);
+        if (colorPicker) colorPicker.value = nextHex;
+        updateColor(nextHex);
+      });
+    });
+  }
   
   // Update accessibility
   updateAccessibilityInfo(color);
@@ -632,8 +926,9 @@ function applyEmotionPalette(emotion) {
 // Update education content
 function updateEducationContent(colorName) {
   const colorData = colorPsychology[colorName] || colorPsychology.blue;
-  
-  document.getElementById('educationContent').innerHTML = `
+  if (!educationContent) return;
+
+  educationContent.innerHTML = `
     <div class="education-section">
       <h4>Understanding ${colorData.name}</h4>
       <p>${getColorEducation(colorName)}</p>
@@ -654,7 +949,14 @@ function getColorEducation(colorName) {
     blue: "Blue is the world's favorite color, preferred by about 40% of people globally. It's associated with trust, dependability, and commitment. Blue light has been shown to reduce stress and lower blood pressure.",
     green: "Green is the most restful color for the human eye. It symbolizes renewal and growth. Hospitals often use green because it relaxes patients. In color therapy, green is used to help with anxiety and depression.",
     yellow: "Yellow is the most visible color from a distance, which is why it's used for taxis and road signs. It stimulates mental activity but can be overpowering if overused. Babies cry more in yellow rooms.",
-    purple: "Purple was the most expensive dye in ancient times, made from sea snails. It represents creativity and imagination. Studies show purple is the color most associated with vanity and extravagance."
+    purple: "Purple was the most expensive dye in ancient times, made from sea snails. It represents creativity and imagination. Studies show purple is the color most associated with vanity and extravagance.",
+    orange: "Orange sits between red and yellow on the spectrum, balancing urgency with optimism. Sports teams often choose orange because it is highly visible and signals enthusiasm without the aggression of red.",
+    teal: "Teal surged in popularity with 90s tech and healthcare brands thanks to its association with both cleanliness and innovation. It's proven to reduce anxiety while keeping focus sharp.",
+    pink: "Pink has been used in correctional facilities to calm aggression, and in marketing to cue playfulness. Hot pinks grab attention quickly, while muted pinks communicate compassion.",
+    brown: "Brown is linked to reliability and heritage—think leather-bound books or artisan coffee. Because it's seldom used in screens, brown can feel refreshingly tactile in digital products.",
+    gray: "Gray is the backbone of many design systems because it doesn't compete with brand colors. The human eye sees gray as stable and mature, making it ideal for neutral frameworks.",
+    black: "Black absorbs every wavelength of light, which is why it conveys depth and sophistication. Luxury brands use black to focus attention on typography and micro-interactions.",
+    white: "White reflects every wavelength, symbolizing clarity and possibility. In UI, white space guides the eye and improves comprehension by lowering cognitive load."
   };
   
   return education[colorName] || education.blue;
@@ -687,6 +989,41 @@ function getColorFacts(colorName) {
       "Purple is the color most associated with royalty",
       "Only two national flags contain purple",
       "Purple is the rarest color in heraldry"
+    ],
+    orange: [
+      "Orange boosts oxygen supply to the brain, creating an energizing effect",
+      "Safety gear often uses orange because it remains visible even in fog",
+      "Marketing tests show orange buttons often outperform red for secondary CTAs"
+    ],
+    teal: [
+      "Teal combines the stability of blue with the healing qualities of green",
+      "UX teams use teal to indicate interactive states without alarming users",
+      "Teal gained popularity after the 2010s wellness boom"
+    ],
+    pink: [
+      "In the 1800s, pink was considered a strong, masculine color",
+      "Pink reduces aggressive behavior in certain controlled environments",
+      "Gen Z brands use pink to signal inclusivity and self-expression"
+    ],
+    brown: [
+      "Brown is associated with honesty in branding studies",
+      "Chocolate cravings are often triggered by seeing rich brown tones",
+      "Minimalist coffee brands leverage brown to signal craftsmanship"
+    ],
+    gray: [
+      "Gray is the most common background color in modern UI kits",
+      "Scandinavia's design movement popularized cool gray palettes",
+      "Neutral grays allow accent colors to appear more saturated"
+    ],
+    black: [
+      "Black can make products appear heavier and more substantial",
+      "Luxury brands use black to justify higher price points",
+      "OLED screens achieve deeper blacks by turning pixels off completely"
+    ],
+    white: [
+      "White space (negative space) improves comprehension by up to 20%",
+      "Architects use white to make small rooms feel larger",
+      "Online meditation apps lean on white to convey calm and focus"
     ]
   };
   
@@ -717,11 +1054,20 @@ function normalizeHex(input) {
 
 function copyToClipboard(text) {
   try {
-    navigator.clipboard && navigator.clipboard.writeText(text);
-  } catch (_) {
-    const t = document.createElement('textarea');
-    t.value = text; document.body.appendChild(t); t.select();
-    document.execCommand('copy'); document.body.removeChild(t);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    } else {
+      const t = document.createElement('textarea');
+      t.value = text;
+      document.body.appendChild(t);
+      t.select();
+      document.execCommand('copy');
+      document.body.removeChild(t);
+    }
+    return true;
+  } catch (error) {
+    console.warn('Copy failed', error);
+    return false;
   }
 }
 
@@ -749,35 +1095,52 @@ function restoreTheme() {
 
 // Override accessibility renderer with improved WCAG details
 function updateAccessibilityInfo(color) {
-  const contrastWhite = chroma.contrast(color, 'white');
-  const contrastBlack = chroma.contrast(color, 'black');
-  const textColor = contrastWhite > contrastBlack ? 'white' : 'black';
+  if (!accessibilityContent) return;
 
-  const html = `
+  const contrastWhite = chroma.contrast(color, '#ffffff');
+  const contrastBlack = chroma.contrast(color, '#000000');
+  const recommendedText = contrastWhite >= contrastBlack ? '#ffffff' : '#000000';
+  const colorHex = color.hex();
+
+  const wcagChecks = [
+    { label: 'AA (normal) on white', passes: contrastWhite >= 4.5 },
+    { label: 'AA (large) on white', passes: contrastWhite >= 3 },
+    { label: 'AA (normal) on black', passes: contrastBlack >= 4.5 },
+    { label: 'AA (large) on black', passes: contrastBlack >= 3 }
+  ];
+
+  accessibilityContent.innerHTML = `
     <div class="accessibility-grid">
       <div class="accessibility-item">
-        <h4>Contrast Ratio</h4>
-        <p>${contrastWhite.toFixed(2)}:1 on white</p>
-        <p>${contrastBlack.toFixed(2)}:1 on black</p>
+        <h4>Contrast Ratios</h4>
+        <p><strong>${contrastWhite.toFixed(2)}:1</strong> on white</p>
+        <p><strong>${contrastBlack.toFixed(2)}:1</strong> on black</p>
       </div>
       <div class="accessibility-item">
-        <h4>Recommended Text</h4>
-        <p style="color: ${textColor}; background-color: ${color}; padding: 0.5rem; border-radius: 4px;">
-          ${textColor.toUpperCase()} text for best readability
-        </p>
+        <h4>Readability Preview</h4>
+        <div class="readability-chip" style="background-color: ${colorHex}; color: ${recommendedText};">
+          ${recommendedText === '#ffffff' ? 'White' : 'Black'} text recommended
+        </div>
+        <div class="readability-pairings">
+          <span style="background-color: #ffffff; color: ${colorHex};">Aa</span>
+          <span style="background-color: #000000; color: ${colorHex};">Aa</span>
+        </div>
       </div>
       <div class="accessibility-item">
         <h4>WCAG Compliance</h4>
-        <p>${contrastWhite >= 4.5 ? '✓' : '✗'} AA (normal) on white</p>
-        <p>${contrastWhite >= 3 ? '✓' : '✗'} AA (large) on white</p>
-        <p>${contrastBlack >= 4.5 ? '✓' : '✗'} AA (normal) on black</p>
-        <p>${contrastBlack >= 3 ? '✓' : '✗'} AA (large) on black</p>
+        <ul class="wcag-list">
+          ${wcagChecks.map(check => `
+            <li>
+              <span class="badge ${check.passes ? 'badge-pass' : 'badge-fail'}">${check.passes ? 'PASS' : 'FAIL'}</span>
+              <span>${check.label}</span>
+            </li>
+          `).join('')}
+        </ul>
       </div>
     </div>`;
-
-  document.getElementById('accessibilityContent').innerHTML = html;
 }
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', init);
+
 
