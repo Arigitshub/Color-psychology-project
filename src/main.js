@@ -287,32 +287,62 @@ const colorStrategies = {
 
 // Initialize App
 function init() {
-  // Set initial color
   restoreTheme();
-  updateColor(colorPicker.value);
+
+  const initialState = parseInitialState();
+  const startingHex = initialState.color || currentHex;
+
+  if (paletteModeSelect && initialState.mode) {
+    paletteModeSelect.value = initialState.mode;
+  }
+
+  if (colorPicker && startingHex) {
+    colorPicker.value = startingHex;
+  }
+
+  updateColor(startingHex);
   
   // Event Listeners
-  colorPicker.addEventListener('input', (e) => {
-    updateColor(e.target.value);
-  });
+  if (colorPicker) {
+    colorPicker.addEventListener('input', (e) => {
+      updateColor(e.target.value);
+    });
+  }
 
-  colorHexInput.addEventListener('input', (e) => {
-    const raw = e.target.value.trim();
-    if (raw.length === 6 && isValidHex(raw)) {
-      const hex = normalizeHex(raw);
-      colorPicker.value = hex;
-      updateColor(hex);
-    }
-  });
+  if (colorHexInput) {
+    colorHexInput.addEventListener('input', (e) => {
+      const raw = e.target.value.trim();
+      if (raw.length === 6 && isValidHex(raw)) {
+        const hex = normalizeHex(raw);
+        if (colorPicker) colorPicker.value = hex;
+        updateColor(hex);
+      }
+    });
 
-  analyzeBtn.addEventListener('click', () => {
-    const raw = colorHexInput.value.trim();
-    if (isValidHex(raw)) {
-      updateColor(normalizeHex(raw));
-    } else {
-      alert('Please enter a valid hex color code');
-    }
-  });
+    colorHexInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const raw = colorHexInput.value.trim();
+        if (isValidHex(raw)) {
+          const normalized = normalizeHex(raw);
+          if (colorPicker) colorPicker.value = normalized;
+          updateColor(normalized);
+        } else {
+          showToast('Use a valid 3 or 6 digit hex code.');
+        }
+      }
+    });
+  }
+
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', () => {
+      const raw = colorHexInput ? colorHexInput.value.trim() : '';
+      if (isValidHex(raw)) {
+        updateColor(normalizeHex(raw));
+      } else {
+        showToast('Please enter a valid hex color code.');
+      }
+    });
+  }
 
   paletteButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -330,31 +360,105 @@ function init() {
 
   if (paletteModeSelect) {
     paletteModeSelect.addEventListener('change', () => {
-      generateColorPalette(colorPicker.value);
+      generateColorPalette(currentHex);
+      updateShareState(currentHex);
     });
   }
 
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', toggleTheme);
   }
+
+  if (copyHexBtn) {
+    copyHexBtn.addEventListener('click', () => {
+      const success = copyToClipboard(currentHex.toUpperCase());
+      showToast(success ? `Copied ${currentHex.toUpperCase()}` : 'Copy failed. Try again.');
+    });
+  }
+
+  if (exportPaletteBtn) {
+    exportPaletteBtn.addEventListener('click', () => {
+      if (!currentPaletteColors.length) {
+        showToast('Generate a palette first.');
+        return;
+      }
+      const css = formatAsCssVariables(currentPaletteColors);
+      const success = copyToClipboard(css);
+      showToast(success ? 'Palette copied as CSS variables.' : 'Copy failed. Try again.');
+    });
+  }
+
+  if (savePaletteBtn) {
+    savePaletteBtn.addEventListener('click', saveCurrentPalette);
+  }
+
+  if (shareLinkBtn) {
+    shareLinkBtn.addEventListener('click', () => {
+      const url = buildShareableUrl(currentHex);
+      const success = copyToClipboard(url);
+      showToast(success ? 'Share link copied to clipboard.' : 'Unable to copy share link.');
+    });
+  }
+
+  if (savedPalettesContainer) {
+    savedPalettesContainer.addEventListener('click', handleSavedPaletteAction);
+    renderSavedPalettes();
+  }
+
+  if (clearSavedBtn) {
+    clearSavedBtn.addEventListener('click', clearSavedPalettes);
+  }
+
+  if (harmonyContent) {
+    harmonyContent.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-color]');
+      if (!target) return;
+      const selected = normalizeHex(target.dataset.color);
+      if (colorPicker) colorPicker.value = selected;
+      updateColor(selected);
+      showToast(`Switched to ${selected.toUpperCase()}`);
+    });
+  }
+
+  if (colorSwatch) {
+    colorSwatch.addEventListener('click', () => {
+      const success = copyToClipboard(currentHex.toUpperCase());
+      showToast(success ? `Copied ${currentHex.toUpperCase()}` : 'Copy failed. Try again.');
+    });
+  }
+
+  window.addEventListener('hashchange', () => {
+    const state = parseInitialState();
+    if (!state.color) return;
+    if (paletteModeSelect && state.mode) {
+      paletteModeSelect.value = state.mode;
+    }
+    if (colorPicker) colorPicker.value = state.color;
+    updateColor(state.color);
+  });
 }
 
 // Update color throughout the app
 function updateColor(hex) {
-  // Update inputs
-  colorPicker.value = hex;
-  colorHexInput.value = hex.replace('#', '').toLowerCase();
+  if (!hex) return;
+  const normalized = normalizeHex(hex);
+  currentHex = normalized;
+
+  if (colorPicker) colorPicker.value = normalized;
+  if (colorHexInput) colorHexInput.value = normalized.replace('#', '').toLowerCase();
+  if (colorSwatch) colorSwatch.style.backgroundColor = normalized;
+
+  const chromaColor = chroma(normalized);
+  const colorName = getColorName(chromaColor);
+
+  if (colorNameEl) colorNameEl.textContent = capitalize(colorName);
+  if (colorValueEl) colorValueEl.textContent = normalized.toUpperCase();
   
-  // Update swatch
-  colorSwatch.style.backgroundColor = hex;
-  if (colorNameEl) colorNameEl.textContent = capitalize(getColorName(chroma(hex)));
-  if (colorValueEl) colorValueEl.textContent = hex.toUpperCase();
-  
-  // Generate and display palette
-  generateColorPalette(hex);
-  
-  // Analyze color
-  analyzeColor(hex);
+  generateColorPalette(normalized);
+  analyzeColor(normalized);
+  updateHarmonyContent(chromaColor);
+  updateStrategyContent(colorName, normalized);
+  updateShareState(normalized);
 }
 
 // Generate color palette
