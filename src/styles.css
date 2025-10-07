@@ -177,6 +177,26 @@ input {
   box-shadow: var(--box-shadow);
 }
 
+.palette-mode {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.palette-mode label {
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.palette-mode select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
 .section-title {
   color: var(--primary-color);
   margin-bottom: var(--spacing-md);
@@ -360,6 +380,8 @@ input[type="text"]:focus {
   color: var(--text-light);
   text-align: center;
   font-family: monospace;
+  user-select: all;
+  cursor: pointer;
 }
 
 .psychology-results {

@@ -9,6 +9,10 @@ const colorPalette = document.getElementById('colorPalette');
 const paletteButtons = document.querySelectorAll('.palette-btn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
+const paletteModeSelect = document.getElementById('paletteMode');
+const themeToggleBtn = document.getElementById('themeToggle');
+const colorNameEl = document.getElementById('colorName');
+const colorValueEl = document.getElementById('colorValue');
 
 // Color Psychology Data
 const colorPsychology = {
@@ -47,6 +51,56 @@ const colorPsychology = {
     emotions: ["luxury", "creativity", "mystery", "spirituality", "wisdom"],
     palette: ["#800080", "#a06ba0", "#c09ec0", "#e0d3e0", "#f0f0f0"]
   }
+  ,
+  orange: {
+    name: "Orange",
+    insights: "Orange blends the energy of red and the happiness of yellow. It conveys enthusiasm, friendliness, and confidence, and is often used for calls to action where urgency is less severe than red.",
+    recommendations: "Use for promotions, onboarding, and friendly CTAs. Works well in sports, food, and entertainment. Avoid overuse in professional/financial contexts.",
+    emotions: ["enthusiasm", "friendliness", "confidence", "warmth"],
+    palette: ["#ff7a00", "#ff9a3d", "#ffb874", "#ffd1a6", "#ffe8d6"]
+  },
+  teal: {
+    name: "Teal",
+    insights: "Teal merges the calming nature of blue with the renewal qualities of green. It signals sophistication, clarity, and balance.",
+    recommendations: "Good for wellness, technology, and creative brands. Works well as a secondary color for calming accents.",
+    emotions: ["balance", "clarity", "sophistication", "refreshing"],
+    palette: ["#008c8c", "#1aa3a3", "#33baba", "#66d1d1", "#b3ebeb"]
+  },
+  pink: {
+    name: "Pink",
+    insights: "Pink communicates compassion, playfulness, and romance. Softer pinks feel nurturing; hot pinks feel energetic and youthful.",
+    recommendations: "Great for lifestyle, beauty, and social apps. Use brighter pinks sparingly for CTAs; use soft pinks for backgrounds.",
+    emotions: ["compassion", "playfulness", "romance", "youth"],
+    palette: ["#ff4fa3", "#ff7abd", "#ffa1d0", "#ffc6e2", "#ffe6f3"]
+  },
+  brown: {
+    name: "Brown",
+    insights: "Brown suggests stability, reliability, and craftsmanship. It is grounded and earthy, often used for natural and artisanal brands.",
+    recommendations: "Use for outdoor, food, and craft products. Pair with cream or white for warmth.",
+    emotions: ["stability", "earthy", "comfort", "craft"],
+    palette: ["#6b4f3b", "#876650", "#a47e66", "#c19885", "#e0c7b0"]
+  },
+  gray: {
+    name: "Gray",
+    insights: "Gray conveys neutrality, balance, and modernity. It recedes well, allowing accent colors to lead.",
+    recommendations: "Use as UI neutrals and backgrounds. Ensure sufficient contrast for text and interactive states.",
+    emotions: ["neutral", "balanced", "modern", "formal"],
+    palette: ["#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6"]
+  },
+  black: {
+    name: "Black",
+    insights: "Black communicates elegance, power, and luxury. It can feel heavy; pair with contrast for readability.",
+    recommendations: "Ideal for luxury and minimal aesthetics. Use generous spacing and contrast.",
+    emotions: ["elegance", "power", "authority", "mystery"],
+    palette: ["#000000", "#111111", "#1f2937", "#374151", "#4b5563"]
+  },
+  white: {
+    name: "White",
+    insights: "White symbolizes clarity, simplicity, and cleanliness. It provides breathing room and amplifies other colors.",
+    recommendations: "Use for clean layouts and whitespace. Avoid low-contrast light text on white.",
+    emotions: ["clarity", "simplicity", "space", "purity"],
+    palette: ["#ffffff", "#f9fafb", "#f3f4f6", "#e5e7eb", "#d1d5db"]
+  }
 };
 
 // Emotion Palettes
@@ -54,12 +108,14 @@ const emotionPalettes = {
   calm: ["#4a6bff", "#6b8cff", "#8dadff", "#aecfff", "#cfe0ff"],
   energy: ["#ff4a4a", "#ff6b6b", "#ff8d8d", "#ffaeae", "#ffcfcf"],
   trust: ["#2d5be3", "#4a6bff", "#6b8cff", "#8dadff", "#aecfff"],
-  creativity: ["#8a2be2", "#9e4bff", "#b26bff", "#c68bff", "#daabff"]
+  creativity: ["#8a2be2", "#9e4bff", "#b26bff", "#c68bff", "#daabff"],
+  luxury: ["#0f0f10", "#221f1f", "#3b2f4a", "#6a4c93", "#d4af37"]
 };
 
 // Initialize App
 function init() {
   // Set initial color
+  restoreTheme();
   updateColor(colorPicker.value);
   
   // Event Listeners
@@ -68,15 +124,18 @@ function init() {
   });
 
   colorHexInput.addEventListener('input', (e) => {
-    if (e.target.value.length === 7 && isValidHex(e.target.value)) {
-      colorPicker.value = e.target.value;
-      updateColor(e.target.value);
+    const raw = e.target.value.trim();
+    if (raw.length === 6 && isValidHex(raw)) {
+      const hex = normalizeHex(raw);
+      colorPicker.value = hex;
+      updateColor(hex);
     }
   });
 
   analyzeBtn.addEventListener('click', () => {
-    if (isValidHex(colorHexInput.value)) {
-      updateColor(colorHexInput.value);
+    const raw = colorHexInput.value.trim();
+    if (isValidHex(raw)) {
+      updateColor(normalizeHex(raw));
     } else {
       alert('Please enter a valid hex color code');
     }
@@ -95,16 +154,28 @@ function init() {
       switchTab(tab);
     });
   });
+
+  if (paletteModeSelect) {
+    paletteModeSelect.addEventListener('change', () => {
+      generateColorPalette(colorPicker.value);
+    });
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', toggleTheme);
+  }
 }
 
 // Update color throughout the app
 function updateColor(hex) {
   // Update inputs
   colorPicker.value = hex;
-  colorHexInput.value = hex;
+  colorHexInput.value = hex.replace('#', '').toLowerCase();
   
   // Update swatch
   colorSwatch.style.backgroundColor = hex;
+  if (colorNameEl) colorNameEl.textContent = capitalize(getColorName(chroma(hex)));
+  if (colorValueEl) colorValueEl.textContent = hex.toUpperCase();
   
   // Generate and display palette
   generateColorPalette(hex);
@@ -116,15 +187,69 @@ function updateColor(hex) {
 // Generate color palette
 function generateColorPalette(baseColor) {
   colorPalette.innerHTML = '';
-  
-  // Create 5-color palette using chroma.js
-  const palette = chroma.scale([baseColor, 'white']).mode('lch').colors(5);
-  
-  palette.forEach((color, i) => {
-    const colorBox = document.createElement('div');
-    colorBox.style.backgroundColor = color;
-    colorBox.title = color;
-    colorPalette.appendChild(colorBox);
+
+  const mode = paletteModeSelect ? paletteModeSelect.value : 'tints';
+  let colors = [];
+
+  const base = chroma(baseColor);
+  const hue = base.get('hsl.h') || 0;
+
+  switch (mode) {
+    case 'shades':
+      colors = chroma.scale([base, '#000']).mode('lch').colors(5);
+      break;
+    case 'monochrome':
+      colors = chroma.scale([
+        base.desaturate(2),
+        base,
+        base.saturate(2)
+      ]).mode('lch').colors(5);
+      break;
+    case 'complementary': {
+      const comp = base.set('hsl.h', (hue + 180) % 360);
+      colors = chroma.scale([base, comp]).mode('lch').colors(5);
+      break;
+    }
+    case 'analogous': {
+      const a1 = base.set('hsl.h', (hue + 30) % 360);
+      const a2 = base.set('hsl.h', (hue + 330) % 360);
+      colors = [a2.hex(), base.hex(), a1.hex(),
+        base.brighten(0.75).hex(), base.darken(0.75).hex()].slice(0, 5);
+      break;
+    }
+    case 'triadic': {
+      const t1 = base.set('hsl.h', (hue + 120) % 360);
+      const t2 = base.set('hsl.h', (hue + 240) % 360);
+      colors = [base.hex(), t1.hex(), t2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
+      break;
+    }
+    case 'split-complementary': {
+      const s1 = base.set('hsl.h', (hue + 150) % 360);
+      const s2 = base.set('hsl.h', (hue + 210) % 360);
+      colors = [base.hex(), s1.hex(), s2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
+      break;
+    }
+    case 'tints':
+    default:
+      colors = chroma.scale([base, '#fff']).mode('lch').colors(5);
+      break;
+  }
+
+  colors.slice(0, 5).forEach((c) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'palette-color';
+    const box = document.createElement('div');
+    box.className = 'color-box';
+    box.style.backgroundColor = c;
+    box.title = c;
+    const code = document.createElement('span');
+    code.className = 'color-code';
+    code.textContent = c.toUpperCase();
+    code.title = 'Click to copy';
+    code.addEventListener('click', () => copyToClipboard(c.toUpperCase()))
+    wrap.appendChild(box);
+    wrap.appendChild(code);
+    colorPalette.appendChild(wrap);
   });
 }
 
@@ -138,6 +263,13 @@ function analyzeColor(hex) {
   document.getElementById('insightsContent').innerHTML = `
     <h4>${colorData.name} Psychology</h4>
     <p>${colorData.insights}</p>
+    <div class="metrics" style="margin-top: 0.75rem; color: var(--text-light); font-family: monospace; font-size: 0.95rem;">
+      <div>HEX: ${hex.toUpperCase()}</div>
+      <div>RGB: ${color.rgb().map(n => Math.round(n)).join(', ')}</div>
+      <div>HSL: ${(() => { const hsl = color.hsl(); const h = Math.round(hsl[0]||0); const s = Math.round((hsl[1]||0)*100); const l = Math.round((hsl[2]||0)*100); return `${h}, ${s}%, ${l}%`; })()}</div>
+      <div>Luminance: ${color.luminance().toFixed(3)}</div>
+      <div>Temp: ${getTemperatureLabel(color)}</div>
+    </div>
     <div class="emotion-tags">
       ${colorData.emotions.map(e => `<span class="tag">${e}</span>`).join('')}
     </div>
