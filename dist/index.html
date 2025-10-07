@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColorMind | Psychology &amp; Accessibility Tool</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap">
+  
+  <script type="module" crossorigin src="/assets/index-2807a121.js"></script>
+  <link rel="stylesheet" href="/assets/index-7ea17289.css">
+</head>
+<body>
+  <div class="app-container" id="app">
+    <header class="app-header">
+      <div class="header-content">
+        <h1>
+          <span class="gradient-text">ColorMind</span>
+          <span class="beta-badge">BETA</span>
+        </h1>
+        <p class="subtitle">Psychology-driven color analysis for designers &amp; developers</p>
+      </div>
+      <div class="theme-toggle">
+        <button id="themeToggle" aria-label="Toggle dark mode">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="color-controls">
+        <div class="color-input-card">
+          <h2 class="section-title">Color Selection</h2>
+          <div class="color-input-group">
+            <div class="color-picker-wrapper">
+              <input type="color" id="primaryColor" value="#4a6bff" aria-label="Primary color picker">
+              <label for="primaryColor">Select Color</label>
+            </div>
+            <div class="hex-input-group">
+              <div class="input-wrapper">
+                <span class="hex-prefix">#</span>
+                <input type="text" id="colorHex" placeholder="4a6bff" maxlength="6" pattern="[0-9A-Fa-f]{6}">
+              </div>
+              <button id="analyzeBtn" class="primary-btn">
+                <span>Analyze</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-options-card">
+          <h2 class="section-title">Emotion Palettes</h2>
+          <div class="palette-buttons">
+            <button data-emotion="calm" class="palette-btn">
+              <span class="palette-icon">🌊</span>
+              <span>Calm</span>
+            </button>
+            <button data-emotion="energy" class="palette-btn">
+              <span class="palette-icon">⚡</span>
+              <span>Energy</span>
+            </button>
+            <button data-emotion="trust" class="palette-btn">
+              <span class="palette-icon">🤝</span>
+              <span>Trust</span>
+            </button>
+            <button data-emotion="creativity" class="palette-btn">
+              <span class="palette-icon">🎨</span>
+              <span>Creativity</span>
+            </button>
+            <button data-emotion="luxury" class="palette-btn">
+              <span class="palette-icon">💎</span>
+              <span>Luxury</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="color-display">
+        <div class="color-swatch-card">
+          <h2 class="section-title">Selected Color</h2>
+          <div class="color-swatch" id="colorSwatch">
+            <div class="color-info">
+              <span id="colorName">Blue</span>
+              <span id="colorValue">#4a6bff</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="color-palette-card">
+          <h2 class="section-title">Generated Palette</h2>
+          <div class="palette-mode">
+            <label for="paletteMode">Mode</label>
+            <select id="paletteMode" aria-label="Palette generation mode">
+              <option value="tints">Tints</option>
+              <option value="shades">Shades</option>
+              <option value="monochrome">Monochrome</option>
+              <option value="complementary">Complementary</option>
+              <option value="analogous">Analogous</option>
+              <option value="triadic">Triadic</option>
+              <option value="split-complementary">Split Complementary</option>
+            </select>
+          </div>
+          <div class="color-palette" id="colorPalette">
+            <div class="palette-color">
+              <div class="color-box"></div>
+              <span class="color-code">#4a6bff</span>
+            </div>
+            <div class="palette-color">
+              <div class="color-box"></div>
+              <span class="color-code">#6b8cff</span>
+            </div>
+            <div class="palette-color">
+              <div class="color-box"></div>
+              <span class="color-code">#8dadff</span>
+            </div>
+            <div class="palette-color">
+              <div class="color-box"></div>
+              <span class="color-code">#aecfff</span>
+            </div>
+            <div class="palette-color">
+              <div class="color-box"></div>
+              <span class="color-code">#cfe0ff</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="psychology-results">
+        <div class="results-header">
+          <h2 class="section-title">Color Analysis</h2>
+          <div class="results-tabs">
+            <button class="tab-btn active" data-tab="insights">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Insights
+            </button>
+            <button class="tab-btn" data-tab="recommendations">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Usage
+            </button>
+            <button class="tab-btn" data-tab="accessibility">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v4"></path>
+                <path d="M12 16h.01"></path>
+              </svg>
+              Accessibility
+            </button>
+            <button class="tab-btn" data-tab="education">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              Learn
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-content active" data-tab="insights">
+          <div class="content-card">
+            <h3>Psychological Insights</h3>
+            <div id="insightsContent"></div>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="recommendations">
+          <div class="content-card">
+            <h3>Usage Recommendations</h3>
+            <div id="recommendationsContent"></div>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="accessibility">
+          <div class="content-card">
+            <h3>Accessibility Analysis</h3>
+            <div id="accessibilityContent"></div>
+          </div>
+        </div>
+
+        <div class="tab-content" data-tab="education">
+          <div class="content-card">
+            <h3>Color Psychology Guide</h3>
+            <div id="educationContent"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>ColorMind &copy; 2023 | Psychology-driven design tool</p>
+      <div class="footer-links">
+        <a href="#" class="footer-link">About</a>
+        <a href="#" class="footer-link">Privacy</a>
+        <a href="#" class="footer-link">GitHub</a>
+      </div>
+    </footer>
+  </div>
+
+  
+</body>
+</html>

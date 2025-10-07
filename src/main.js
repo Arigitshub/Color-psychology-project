@@ -323,34 +323,6 @@ function applyEmotionPalette(emotion) {
   });
 }
 
-// Update accessibility info
-function updateAccessibilityInfo(color) {
-  const contrastWhite = chroma.contrast(color, 'white');
-  const contrastBlack = chroma.contrast(color, 'black');
-  const textColor = contrastWhite > contrastBlack ? 'white' : 'black';
-  
-  document.getElementById('accessibilityContent').innerHTML = `
-    <div class="accessibility-grid">
-      <div class="accessibility-item">
-        <h4>Contrast Ratio</h4>
-        <p>${contrastWhite.toFixed(2)}:1 (on white)</p>
-        <p>${contrastBlack.toFixed(2)}:1 (on black)</p>
-      </div>
-      <div class="accessibility-item">
-        <h4>Recommended Text</h4>
-        <p style="color: ${textColor}; background-color: ${color}; padding: 0.5rem; border-radius: 4px;">
-          ${textColor.toUpperCase()} text for best readability
-        </p>
-      </div>
-      <div class="accessibility-item">
-        <h4>WCAG Compliance</h4>
-        <p>${contrastWhite >= 4.5 ? '✅' : '❌'} AA Normal Text</p>
-        <p>${contrastWhite >= 7 ? '✅' : '❌'} AAA Normal Text</p>
-      </div>
-    </div>
-  `;
-}
-
 // Update education content
 function updateEducationContent(colorName) {
   const colorData = colorPsychology[colorName] || colorPsychology.blue;
@@ -424,11 +396,6 @@ function switchTab(tab) {
   tabContents.forEach(content => {
     content.classList.toggle('active', content.dataset.tab === tab);
   });
-}
-
-// Validate hex color
-function isValidHex(color) {
-  return /^#([0-9A-F]{3}){1,2}$/i.test(color);
 }
 
 // Enhanced helpers (override + additions)
@@ -507,3 +474,4 @@ function updateAccessibilityInfo(color) {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', init);
+
