@@ -468,6 +468,98 @@ function generateColorPalette(baseColor) {
   renderPaletteColors(colors, `${formatModeLabel(mode)} palette`);
 }
 
+function buildPaletteFromMode(baseColor, mode) {
+  const base = chroma(baseColor);
+  const hue = base.get('hsl.h') || 0;
+  switch (mode) {
+    case 'shades':
+      return chroma.scale([base, '#000000']).mode('lch').colors(5);
+    case 'monochrome':
+      return chroma.scale([base.desaturate(2), base, base.saturate(2)]).mode('lch').colors(5);
+    case 'complementary': {
+      const comp = base.set('hsl.h', (hue + 180) % 360);
+      return chroma.scale([base, comp]).mode('lch').colors(5);
+    }
+    case 'analogous': {
+      const a1 = base.set('hsl.h', (hue + 30) % 360);
+      const a2 = base.set('hsl.h', (hue + 330) % 360);
+      return [a2.hex(), base.hex(), a1.hex(), base.brighten(0.75).hex(), base.darken(0.75).hex()];
+    }
+    case 'triadic': {
+      const t1 = base.set('hsl.h', (hue + 120) % 360);
+      const t2 = base.set('hsl.h', (hue + 240) % 360);
+      return [base.hex(), t1.hex(), t2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
+    }
+    case 'split-complementary': {
+      const s1 = base.set('hsl.h', (hue + 150) % 360);
+      const s2 = base.set('hsl.h', (hue + 210) % 360);
+      return [base.hex(), s1.hex(), s2.hex(), base.brighten(0.5).hex(), base.darken(0.5).hex()];
+    }
+    case 'tints':
+    default:
+      return chroma.scale([base, '#ffffff']).mode('lch').colors(5);
+  }
+}
+
+function renderPaletteColors(colors, metaLabel) {
+  if (!colorPalette) return;
+  const normalized = colors.slice(0, 5).map(color => chroma(color).hex());
+  currentPaletteColors = normalized;
+
+  colorPalette.innerHTML = '';
+
+  normalized.forEach((colorHex) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'palette-color';
+
+    const box = document.createElement('div');
+    box.className = 'color-box';
+    box.style.backgroundColor = colorHex;
+    box.setAttribute('role', 'button');
+    box.setAttribute('tabindex', '0');
+    box.setAttribute('aria-label', `Use ${colorHex.toUpperCase()} as the primary color`);
+    const handleSelect = () => updateColor(colorHex);
+    box.addEventListener('click', handleSelect);
+    box.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleSelect();
+      }
+    });
+
+    const code = document.createElement('span');
+    code.className = 'color-code';
+    code.textContent = colorHex.toUpperCase();
+    code.setAttribute('role', 'button');
+    code.setAttribute('tabindex', '0');
+    code.title = 'Copy hex value';
+    const handleCopy = () => {
+      const success = copyToClipboard(colorHex.toUpperCase());
+      showToast(success ? `Copied ${colorHex.toUpperCase()}` : 'Copy failed. Try again.');
+    };
+    code.addEventListener('click', handleCopy);
+    code.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleCopy();
+      }
+    });
+
+    wrap.appendChild(box);
+    wrap.appendChild(code);
+    colorPalette.appendChild(wrap);
+  });
+
+  if (paletteMetaEl && metaLabel) {
+    paletteMetaEl.textContent = `${currentPaletteColors.length} colors · ${metaLabel}`;
+  }
+}
+
+function formatModeLabel(mode) {
+  if (!mode) return 'Palette';
+  return mode.split('-').map(part => capitalize(part)).join(' ');
+}
+
 // Analyze color and display results
 function analyzeColor(hex) {
   const color = chroma(hex);
